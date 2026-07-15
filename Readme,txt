@@ -1,0 +1,54 @@
+1. Project Overview
+This project compares the performance of two RPL objective functions, OF0 and MRHOF, across small (10 nodes), medium (20 nodes), and large (30 nodes) IoT network scenarios. 
+Each scenario was simulated using COOJA on Contiki-NG and repeated five times. Four performance metrics were measured, which are Packet Delivery Ratio, End-to-End Delay, Energy Consumption, and Control Overhead.
+
+2. Repository Contents
+
+rpl_client.c   -- Firmware for client motes. Sends UDP data packets containing a node ID, sequence number, and timestamp to the root, and tracks total packets sent and energy consumed. 
+root.c         --Firmware for the RPL root mote. Initialises the DODAG root, runs a UDP server on port 5678, and computes end-to-end delay and total packets received. Prints a final summary at the end of each run. 
+project_conf.h --Contiki-NG project configuration. Used to switch the routing metric between OF0 and MRHOF for each scenario. 
+parse_log.py   --Python script that parses the exported COOJA mote output log and calculates PDR, average delay, energy consumption, and control overhead. 
+
+3. Tools and Software Required
+
+Oracle VirtualBox -- https://www.virtualbox.org/
+ubuntu -- https://ubuntu.com/download/desktop
+Contiki-NG 
+COOJA Simulator -- Include in the Contiki-NG
+Java JDK
+Python
+Wireshark (optional) -- Latest, used only to verify the Objective Function
+
+4. Setup Instructions
+
+ 1. Download and install Oracle VirtualBox on the host machine.
+ 2. Create a new virtual machine in VirtualBox and install Ubuntu 24.04.3 LTS as the guest operating system. Allocate at least 4GB RAM and 2 CPU cores so that COOJA runs smoothly.
+ 3. Boot into the Ubuntu virtual machine and open a terminal for the remaining steps.
+ 4. Install the Contiki-NG toolchain following the official Getting Started guide at the link above. This includes cloning the Contiki-NG repository and installing the required compiler toolchain.
+ 5. Copy `rpl_client.c`, `root.c`, and `project_conf.h` from this repository into a new folder under `contiki-ng/examples/`.
+ 6. Install a Java JDK so that COOJA can run, since COOJA is a Java-based simulator.
+ 7. Launch COOJA from a terminal.
+
+ --command--
+cd contiki-ng/tools/cooja
+./gradlew run
+
+-------------------------------
+
+8. In COOJA, create a new simulation and add motes using `root.c` as the RPL root mote and `rpl_client.c` as the client motes. Set the number of client motes to 10, 20, and 30 to match the 10, 20, or 30 node scenarios, one mote is the root.
+9. Before compiling the client and root motes, open `project_conf.h` and set the objective function for the scenario being run. Leave the default MRHOF setting unchanged to test MRHOF, or set the OF0 override to test OF0. Recompile the motes in COOJA after changing this file.
+10. Run the simulation for 35 minutes of simulated time, which is 2100 seconds. COOJA's speed limit can be raised to shorten the real time needed to complete a run.
+11. When the simulation ends, export the full mote output from COOJA's log window to a text file.
+12. Repeat steps 8to 11 for each of the six scenarios, five times per scenario, for a total of 30 simulation runs.
+
+
+ 5. Running the Analysis Script 
+
+Once a log file has been exported, run the parsing script from a terminal.
+
+
+--command--
+python3 parse_log.py <path_to_log_file.txt>
+---------------------------------------------
+
+The script extracts the per-node transmission and energy statistics, the root's final summary line, and the count of DIO, DIS, and DAO control messages, then prints the calculated PDR, average end-to-end delay, average energy consumption, and control overhead for that run.
